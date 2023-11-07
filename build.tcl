@@ -21,13 +21,13 @@ read_verilog -sv [ glob ./hdl/*.sv ]
 read_verilog  [ glob ./hdl/*.v ]
 read_xdc ./xdc/top_level.xdc
 #Using this in Lab 5 now!
-#read_mem [ glob ./data/*.mem ]
+# read_mem [ glob ./data/*.mem ]
 
 # set the part number so Vivado knows how to build (each FPGA is different)
 set_part $partNum
 
 #Run Synthesis
-synth_design -top  -part $partNum -verbose
+synth_design -top top_level -part $partNum -verbose
 write_checkpoint -force $outputDir/post_synth.dcp
 report_timing_summary -file $outputDir/post_synth_timing_summary.rpt
 report_utilization -file $outputDir/post_synth_util.rpt
