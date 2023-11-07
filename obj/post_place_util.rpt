@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2023.1 (lin64) Build 3865809 Sun May  7 15:04:56 MDT 2023
-| Date         : Tue Nov  7 00:01:37 2023
+| Date         : Tue Nov  7 00:11:15 2023
 | Host         : worker running 64-bit Ubuntu 20.04.6 LTS
 | Command      : report_utilization -file obj/post_place_util.rpt
 | Design       : top_level
@@ -120,9 +120,9 @@ Table of Contents
 +-----------------------------+------+-------+------------+-----------+-------+
 |          Site Type          | Used | Fixed | Prohibited | Available | Util% |
 +-----------------------------+------+-------+------------+-----------+-------+
-| Bonded IOB                  |   69 |    69 |          0 |       210 | 32.86 |
-|   IOB Master Pads           |   36 |       |            |           |       |
-|   IOB Slave Pads            |   33 |       |            |           |       |
+| Bonded IOB                  |   31 |    31 |          0 |       210 | 14.76 |
+|   IOB Master Pads           |   17 |       |            |           |       |
+|   IOB Slave Pads            |   14 |       |            |           |       |
 | Bonded IPADs                |    0 |     0 |          0 |         2 |  0.00 |
 | PHY_CONTROL                 |    0 |     0 |          0 |         5 |  0.00 |
 | PHASER_REF                  |    0 |     0 |          0 |         5 |  0.00 |
@@ -185,15 +185,14 @@ Table of Contents
 | LUT5       |   78 |                 LUT |
 | LUT3       |   78 |                 LUT |
 | RAMB36E1   |   48 |        Block Memory |
-| OBUFT      |   44 |                  IO |
 | IBUF       |   15 |                  IO |
 | CARRY4     |   12 |          CarryLogic |
 | MUXF7      |    9 |               MuxFx |
+| OBUF       |    8 |                  IO |
 | OSERDESE2  |    6 |                  IO |
 | OBUFDS     |    4 |                  IO |
 | LUT1       |    4 |                 LUT |
 | BUFG       |    3 |               Clock |
-| OBUF       |    2 |                  IO |
 | FDCE       |    2 |        Flop & Latch |
 | DSP48E1    |    2 |    Block Arithmetic |
 | MMCME2_ADV |    1 |               Clock |
