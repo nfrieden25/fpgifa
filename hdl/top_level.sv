@@ -62,8 +62,8 @@ module top_level(
   logic [1:0] valid_addr_rot_pipe; //pipelining variables in || with frame_buffer
 
   //values from the frame buffer:
-  logic [15:0] frame_buff_raw; //output of frame buffer (direct)
-  logic [15:0] frame_buff; //output of frame buffer OR black (based on pipeline valid)
+  logic [8:0] frame_buff_raw; //output of frame buffer (direct)
+  logic [8:0] frame_buff; //output of frame buffer OR black (based on pipeline valid)
 
   //remapped frame_buffer outputs with 8 bits for r, g, b
   logic [7:0] fb_red, fb_green, fb_blue;
@@ -146,6 +146,11 @@ module top_level(
     .vcount_out(vcount_rec) //corresponding vcount of camera pixel
   );
 
+  logic [7:0] bw;
+  logic [9:0] rgb_sum;
+  assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0],3'b0};
+  assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
+
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
   //but our display is running at 720p at 60 fps, there's no hope to have the
@@ -159,13 +164,13 @@ module top_level(
   //also note the camera produces a 320*240 image, but we display it 240 by 320
   //(taken care of by the rotate module below).
   xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH(16), //each entry in this memory is 16 bits
+    .RAM_WIDTH(8), //each entry in this memory is 8 bits
     .RAM_DEPTH(320*240)) //there are 240*320 or 76800 entries for full frame
     frame_buffer (
     .addra(hcount_rec + 320*vcount_rec), //pixels are stored using this math
     .clka(clk_pixel),
     .wea(data_valid_rec),
-    .dina(pixel_data_rec),
+    .dina(bw),
     .ena(1'b1),
     .regcea(1'b1),
     .rsta(sys_rst),
@@ -228,16 +233,16 @@ module top_level(
     valid_addr_rot_pipe[0] <= valid_addr_rot;
     valid_addr_rot_pipe[1] <= valid_addr_rot_pipe[0];
   end
-  assign frame_buff = valid_addr_rot_pipe[1]?frame_buff_raw:16'b0;
+  assign frame_buff = valid_addr_rot_pipe[1]?frame_buff_raw:8'b0;
 
   //split fame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
-  assign fb_red = {frame_buff[15:11],3'b0};
-  assign fb_green = {frame_buff[10:5], 2'b0};
-  assign fb_blue = {frame_buff[4:0],3'b0};
+  // assign fb_red = {frame_buff[15:11],3'b0};
+  // assign fb_green = {frame_buff[10:5], 2'b0};
+  // assign fb_blue = {frame_buff[4:0],3'b0};
 
-  assign red = fb_red;
-  assign green = fb_green;
-  assign blue = fb_blue;
+  assign red = frame_buff;
+  assign green = frame_buff;
+  assign blue = frame_buff;
 
   //three tmds_encoders (blue, green, red)
   tmds_encoder tmds_red(
