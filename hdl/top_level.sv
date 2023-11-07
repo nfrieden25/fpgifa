@@ -151,6 +151,45 @@ module top_level(
   assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0],3'b0};
   assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
 
+  localparam FRAME_WIDTH = 240;
+  localparam NUM_LINES = 5;
+  logic [7:0] unused;
+  logic [clogb2((FRAME_WIDTH * NUM_LINES)-1)-1:0] w_pointer;
+  logic [clogb2((FRAME_WIDTH * NUM_LINES)-1)-1:0] r_pointer;
+
+  xilinx_true_dual_port_read_first_2_clock_ram #(
+    .RAM_WIDTH = 8,                         // Specify RAM data width
+    .RAM_DEPTH = FRAME_WIDTH * NUM_LINES,   // Specify RAM depth (number of entries)
+  ) line_buffer (
+    .addra(w_pointer),      // WRITE pointer
+    .addrb(r_pointer),      // READ pointer
+    .dina(bw),              // Port A RAM input data
+    .dinb(8'b0000_0000),    // Port B RAM input data
+    .clka(clk_in),          // Port A clock
+    .clkb(clk_in),          // Port B clock
+    .wea(),                 // Port A write enable: whenever valid data
+    .web(1'b0),             // Port B write enable
+    .ena(1'b1),             // Port A RAM Enable, for additional power savings, disable port when not in use
+    .enb(1'b1),             // Port B RAM Enable, for additional power savings, disable port when not in use
+    .rsta(rst_in),          // Port A output reset (does not affect memory contents)
+    .rstb(rst_in),          // Port B output reset (does not affect memory contents)
+    .regcea(1'b1),          // Port A output register enable
+    .regceb(1'b1),          // Port B output register enable
+
+    .douta(unused),         // Port A RAM output data
+    .doutb()                // Port B RAM output data
+  );
+
+  always_ff @(posedge clk_pixel) begin
+      if (rst_in)begin
+        w_pointer <= 0;
+        r_pointer <= FRAME_WIDTH * (NUM_LINES - 2);
+    end else begin
+      w_pointer <= (w_pointer < FRAME_WIDTH * NUM_LINES - 1) ? w_pointer + 1 : 0;
+      r_pointer <= (r_pointer < FRAME_WIDTH * NUM_LINES - 1) ? r_pointer + 1 : 0;
+    end
+  end
+
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
   //but our display is running at 720p at 60 fps, there's no hope to have the
