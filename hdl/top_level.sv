@@ -151,44 +151,51 @@ module top_level(
   assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0],3'b0};
   assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
 
-  localparam FRAME_WIDTH = 240;
-  localparam NUM_LINES = 5;
-  logic [7:0] unused;
-  logic [clogb2((FRAME_WIDTH * NUM_LINES)-1)-1:0] w_pointer;
-  logic [clogb2((FRAME_WIDTH * NUM_LINES)-1)-1:0] r_pointer;
+  logic [7:0] updated_pixel;
+  logic [10:0] a_hcount;
+  logic [9:0] a_vcount;
+  logic a_valid;
+  logic [7:0] b;
+  logic [7:0] e;
 
-  xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH = 8,                         // Specify RAM data width
-    .RAM_DEPTH = FRAME_WIDTH * NUM_LINES,   // Specify RAM depth (number of entries)
-  ) line_buffer (
-    .addra(w_pointer),      // WRITE pointer
-    .addrb(r_pointer),      // READ pointer
-    .dina(bw),              // Port A RAM input data
-    .dinb(8'b0000_0000),    // Port B RAM input data
-    .clka(clk_in),          // Port A clock
-    .clkb(clk_in),          // Port B clock
-    .wea(),                 // Port A write enable: whenever valid data
-    .web(1'b0),             // Port B write enable
-    .ena(1'b1),             // Port A RAM Enable, for additional power savings, disable port when not in use
-    .enb(1'b1),             // Port B RAM Enable, for additional power savings, disable port when not in use
-    .rsta(rst_in),          // Port A output reset (does not affect memory contents)
-    .rstb(rst_in),          // Port B output reset (does not affect memory contents)
-    .regcea(1'b1),          // Port A output register enable
-    .regceb(1'b1),          // Port B output register enable
+  line_buffers line_buffers_m (
+    .clk_in(clk_pixel),
+    .rst_in(sys_rst),
 
-    .douta(unused),         // Port A RAM output data
-    .doutb()                // Port B RAM output data
+    .bw_pixel(bw),
+    .bw_pixel_valid(data_valid_rec),
+    .bw_hcount(hcount_rec),
+    .bw_vcount(vcount_rec),
+    .updated_pixel(updated_pixel),
+
+    .a_hcount(a_hcount),
+    .a_vcount(a_vcount),
+    .a_valid(a_valid),
+    .new_b(b),
+    .new_e(e)
   );
 
-  always_ff @(posedge clk_pixel) begin
-      if (rst_in)begin
-        w_pointer <= 0;
-        r_pointer <= FRAME_WIDTH * (NUM_LINES - 2);
-    end else begin
-      w_pointer <= (w_pointer < FRAME_WIDTH * NUM_LINES - 1) ? w_pointer + 1 : 0;
-      r_pointer <= (r_pointer < FRAME_WIDTH * NUM_LINES - 1) ? r_pointer + 1 : 0;
-    end
-  end
+  logic dithered_pixel;
+  logic [10:0] dithered_hcount;
+  logic [9:0] dithered_vcount;
+  logic dithered_valid;
+
+  dither dither_m (
+    .clk_in(clk_pixel),
+    .rst_in(sys_rst),
+
+    .a_valid(a_hcount),
+    .a_hcount(a_vcount),
+    .a_vcount(a_valid),
+    .b(b),
+    .e(e),
+
+    .dithered_pixel(dithered_pixel),
+    .dithered_hcount(dithered_hcount),
+    .dithered_vcount(dithered_vcount),
+    .dithered_valid(dithered_valid),
+    .updated_pixel(updated_pixel)
+  );
 
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
@@ -203,13 +210,13 @@ module top_level(
   //also note the camera produces a 320*240 image, but we display it 240 by 320
   //(taken care of by the rotate module below).
   xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH(8), //each entry in this memory is 8 bits
+    .RAM_WIDTH(1), //each entry in this memory is 8 bits
     .RAM_DEPTH(320*240)) //there are 240*320 or 76800 entries for full frame
     frame_buffer (
-    .addra(hcount_rec + 320*vcount_rec), //pixels are stored using this math
+    .addra(dithered_hcount + 320*dithered_vcount), //pixels are stored using this math
     .clka(clk_pixel),
-    .wea(data_valid_rec),
-    .dina(bw),
+    .wea(dithered_valid),
+    .dina(dithered_pixel),
     .ena(1'b1),
     .regcea(1'b1),
     .rsta(sys_rst),
