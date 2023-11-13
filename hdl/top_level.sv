@@ -13,7 +13,8 @@ module top_level(
   input wire [7:0] pmoda,
   input wire [2:0] pmodb,
   output logic pmodbclk,
-  output logic pmodblock
+  output logic pmodblock,
+  output logic [15:0] led
   );
   //shut up those rgb LEDs (active high):
   assign rgb1 = 0;
@@ -180,13 +181,15 @@ module top_level(
   logic [9:0] dithered_vcount;
   logic dithered_valid;
 
+  assign led = dithered_vcount;
+
   dither dither_m (
     .clk_in(clk_pixel),
     .rst_in(sys_rst),
 
-    .a_valid(a_hcount),
-    .a_hcount(a_vcount),
-    .a_vcount(a_valid),
+    .a_valid(a_valid),
+    .a_hcount(a_hcount),
+    .a_vcount(a_vcount),
     .b(b),
     .e(e),
 
@@ -215,8 +218,8 @@ module top_level(
     frame_buffer (
     .addra(dithered_hcount + 320*dithered_vcount), //pixels are stored using this math
     .clka(clk_pixel),
-    .wea(dithered_valid),
-    .dina(dithered_pixel),
+    .wea(dithered_valid), // dithered_valid
+    .dina(dithered_pixel), // dithered_pixel
     .ena(1'b1),
     .regcea(1'b1),
     .rsta(sys_rst),
@@ -286,9 +289,10 @@ module top_level(
   // assign fb_green = {frame_buff[10:5], 2'b0};
   // assign fb_blue = {frame_buff[4:0],3'b0};
 
-  assign red = frame_buff;
-  assign green = frame_buff;
-  assign blue = frame_buff;
+  assign red = frame_buff ? 255 : 0; 
+  assign green = frame_buff ? 255 : 0;
+  assign blue = frame_buff ? 255 : 0;
+
 
   //three tmds_encoders (blue, green, red)
   tmds_encoder tmds_red(
