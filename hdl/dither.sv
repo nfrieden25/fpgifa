@@ -30,7 +30,7 @@ module dither (
     if (rst_in)begin
         
     end else begin
-        dithered_pixel <= dithered_value == 255 ? 1 : 0;
+        dithered_pixel <= dithered_value == 255 ? 0 : 1;
         a <= (new_b > 255) ? 255 : (new_b < 0) ? 0 : new_b;
         c <= (new_d > 255) ? 255 : (new_d < 0) ? 0 : new_d;
         d <= (new_e > 255) ? 255 : (new_e < 0) ? 0 : new_e;
@@ -42,6 +42,3 @@ module dither (
     end
   end
 endmodule
-
-// QUESTIONS
-//   all the signed logic help

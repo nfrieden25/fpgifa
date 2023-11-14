@@ -1,23 +1,3 @@
-// INPUTS
-// clk_in
-// valid signal (data_valid_rec from recover)
-// pixel from that (bw, the modified version of pixel_data_rec)
-// pixel written back every clock cycle from dither
-//   hcount & vcount for that pixel
-
-// OUTPUTS
-// outputs B and E every cycle (8 bit values)
-// signal for whether B and E are valid
-// hcount 
-// vcount
-
-// need to pass to dither:
-// input wire a_valid, 
-// input wire [10:0] a_hcount,
-// input wire [9:0] a_vcount,
-// input wire [7:0] b,
-// input wire [7:0] e,
-
 module line_buffers (
   input wire clk_in,
   input wire rst_in,
@@ -62,61 +42,58 @@ module line_buffers (
   // MUX EVERYTHING INTO RIGHT ROLES
   always_comb begin
     if (line_mux == 0) begin
-        // write_ptr_0 = X
-        // write_data_0 = X
+        // 0 will be reading out the value of b
         write_enable_0 = 1'b0;
-        read_ptr_0 = bw_hcount; // 0 - 239 
+        read_ptr_0 = bw_hcount;
         new_b = read_data_0;
 
+        // 1 will be reading out the value of e & writing in updated value of c
         write_ptr_1 = bw_hcount - 3; // location of c
         write_data_1 = updated_pixel; // updated c
-        write_enable_1 = 1'b1; // TODO: might want to make this an enable from dither
-        read_ptr_1 = bw_hcount; // 0 - 239 
+        write_enable_1 = 1'b1;
+        read_ptr_1 = bw_hcount;
         new_e = read_data_1;
 
+        // 2 will be writing data into prep line from recover
         write_ptr_2 = bw_hcount;
         write_data_2 = bw_pixel;
         write_enable_2 = bw_pixel_valid;
-        // read_ptr_2 = X
-        // read_data_2 = X
 
     end else if (line_mux == 1) begin
-        // write_ptr_1 = X
-        // write_data_1 = X
+        // 1 will be reading out the value of b
         write_enable_1 = 1'b0;
-        read_ptr_1 = bw_hcount; // 0 - 239 
+        read_ptr_1 = bw_hcount;
         new_b = read_data_1;
 
+        // 2 will be reading out the value of e & writing in updated value of c
         write_ptr_2 = bw_hcount - 3; // location of c
         write_data_2 = updated_pixel; // updated c
-        write_enable_2 = 1'b1; // TODO: might want to make this an enable from dither
-        read_ptr_2 = bw_hcount; // 0 - 239 
+        write_enable_2 = 1'b1;
+        read_ptr_2 = bw_hcount;
         new_e = read_data_2;
 
+        // 0 will be writing data into prep line from recover
         write_ptr_0 = bw_hcount;
         write_data_0 = bw_pixel;
         write_enable_0 = bw_pixel_valid;
-        // read_ptr_0 = X
-        // read_data_0 = X
         
     end else begin
-        // write_ptr_2 = X
-        // write_data_2 = X
+        // 2 will be reading out the value of b
         write_enable_2 = 1'b0;
-        read_ptr_2 = bw_hcount; // 0 - 239 
+        read_ptr_2 = bw_hcount;
         new_b = read_data_2;
 
+        // 0 will be reading out the value of e & writing in updated value of c
         write_ptr_0 = bw_hcount - 3; // location of c
         write_data_0 = updated_pixel; // updated c
-        write_enable_0 = 1'b1; // TODO: might want to make this an enable from dither
-        read_ptr_0 = bw_hcount; // 0 - 239 
+        write_enable_0 = 1'b1;
+        read_ptr_0 = bw_hcount;
         new_e = read_data_0;
 
+        // 1 will be writing data into prep line from recover
         write_ptr_1 = bw_hcount;
         write_data_1 = bw_pixel;
         write_enable_1 = bw_pixel_valid;
-        // read_ptr_1 = X
-        // read_data_1 = X
     end
   end
 
@@ -196,25 +173,19 @@ module line_buffers (
     if (rst_in)begin
         line_mux <= 0;
     end else begin
-        if (bw_hcount == FRAME_WIDTH - 1) begin
-            line_mux <= (line_mux < 2) ? (line_mux + 1) : 0; 
-        end
+      // rotate through line buffer roles
+      if (bw_hcount == FRAME_WIDTH - 1) begin
+          line_mux <= (line_mux < 2) ? (line_mux + 1) : 0; 
+      end
 
-        // a_hcount = hcount @ b & e - 2
-        // BUT there is also a two cycle delay until new_b and new_e get those values
-        a_hcount <= (bw_hcount >= 4) ? bw_hcount - 4 : bw_hcount;
-        // a_hcount <= bw_hcount;
+      // a_hcount = hcount @ b & e - 2 - 2 cycle delay from reading from BRAM
+      a_hcount <= (bw_hcount >= 4) ? bw_hcount - 4 : bw_hcount;
 
-        // a is always two lines behind where you're writing
-        a_vcount <= (bw_vcount >= 2) ? bw_vcount - 2 : bw_vcount;
-        // a_vcount <= bw_vcount;
+      // a_vcount is always two lines behind where you're writing
+      a_vcount <= (bw_vcount >= 2) ? bw_vcount - 2 : bw_vcount;
 
-        // a is valid if the pixel being read in is valid (for now)
-        a_valid <= bw_pixel_valid;
-
+      // a is valid if the pixel being read in is valid (for now)
+      a_valid <= bw_pixel_valid;
     end
   end
 endmodule
-
-// QUESTIONS
-// if we're running this on the faster clock, does it still take 2 cycles?

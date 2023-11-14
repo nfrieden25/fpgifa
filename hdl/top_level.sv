@@ -58,13 +58,18 @@ module top_level(
   logic valid_addr_scaled; //whether or not two values above are valid (or out of frame)
 
   //outputs of the rotation module
-  logic [16:0] img_addr_rot; //result of image transformation rotation
-  logic valid_addr_rot; //forward propagated valid_addr_scaled
-  logic [1:0] valid_addr_rot_pipe; //pipelining variables in || with frame_buffer
+  logic [16:0] img_addr_rot_dithered; //result of image transformation rotation
+  logic valid_addr_rot_dithered; //forward propagated valid_addr_scaled
+  logic [16:0] img_addr_rot_bw; //result of image transformation rotation
+  logic valid_addr_rot_bw; //forward propagated valid_addr_scaled
+  logic [1:0] valid_addr_rot_pipe_dithered; //pipelining variables in || with frame_buffer
+  logic [1:0] valid_addr_rot_pipe_bw; //pipelining variables in || with frame_buffer
 
   //values from the frame buffer:
-  logic [8:0] frame_buff_raw; //output of frame buffer (direct)
-  logic [8:0] frame_buff; //output of frame buffer OR black (based on pipeline valid)
+  logic [8:0] frame_buff_raw_dithered; //output of frame buffer (direct)
+  logic [8:0] frame_buff_raw_bw; //output of frame buffer (direct)
+  logic [8:0] frame_buff_dithered; //output of frame buffer OR black (based on pipeline valid)
+  logic [8:0] frame_buff_bw; //output of frame buffer OR black (based on pipeline valid)
 
   //remapped frame_buffer outputs with 8 bits for r, g, b
   logic [7:0] fb_red, fb_green, fb_blue;
@@ -181,8 +186,6 @@ module top_level(
   logic [9:0] dithered_vcount;
   logic dithered_valid;
 
-  assign led = dithered_vcount;
-
   dither dither_m (
     .clk_in(clk_pixel),
     .rst_in(sys_rst),
@@ -212,26 +215,49 @@ module top_level(
   //matter for slow movement
   //also note the camera produces a 320*240 image, but we display it 240 by 320
   //(taken care of by the rotate module below).
+
   xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH(1), //each entry in this memory is 8 bits
-    .RAM_DEPTH(320*240)) //there are 240*320 or 76800 entries for full frame
-    frame_buffer (
-    .addra(dithered_hcount + 320*dithered_vcount), //pixels are stored using this math
+    .RAM_WIDTH(1),
+    .RAM_DEPTH(320*240))
+  frame_buffer_dither (
+    .addra(dithered_hcount + 320*dithered_vcount),
     .clka(clk_pixel),
-    .wea(dithered_valid), // dithered_valid
-    .dina(dithered_pixel), // dithered_pixel
+    .wea(dithered_valid),
+    .dina(dithered_pixel),
     .ena(1'b1),
     .regcea(1'b1),
-    .rsta(sys_rst),
+    .rsta(sys_rst),                         
     .douta(), //never read from this side
-    .addrb(img_addr_rot),//transformed lookup pixel
+    .addrb(img_addr_rot_dithered),//transformed lookup pixel
     .dinb(16'b0),
     .clkb(clk_pixel),
     .web(1'b0),
-    .enb(valid_addr_rot),
+    .enb(valid_addr_rot_dithered),
     .rstb(sys_rst),
     .regceb(1'b1),
-    .doutb(frame_buff_raw)
+    .doutb(frame_buff_raw_dithered)
+  );
+
+  xilinx_true_dual_port_read_first_2_clock_ram #(
+    .RAM_WIDTH(8),
+    .RAM_DEPTH(320*240))
+  frame_buffer_bw (
+    .addra(hcount_rec + 320*vcount_rec),
+    .clka(clk_pixel),
+    .wea(data_valid_rec), // dithered_valid
+    .dina(bw), // dithered_pixel
+    .ena(1'b1),
+    .regcea(1'b1),
+    .rsta(sys_rst),                         
+    .douta(), //never read from this side
+    .addrb(img_addr_rot_bw),//transformed lookup pixel
+    .dinb(16'b0),
+    .clkb(clk_pixel),
+    .web(1'b0),
+    .enb(valid_addr_rot_bw),
+    .rstb(sys_rst),
+    .regceb(1'b1),
+    .doutb(frame_buff_raw_bw)
   );
 
   //start of the full video pipeline is here...
@@ -259,15 +285,25 @@ module top_level(
 
   //Rotates and mirror-images Image to render correctly (pi/2 CCW rotate):
   // The output address should be fed right into the frame buffer for lookup
-  rotate rotate_m (
+  rotate rotate_m_dithered (
     .clk_in(clk_pixel),
     .rst_in(sys_rst),
     .hcount_in(hcount_scaled),
     .vcount_in(vcount_scaled),
     .valid_addr_in(valid_addr_scaled),
-    .pixel_addr_out(img_addr_rot),
-    .valid_addr_out(valid_addr_rot)
-    );
+    .pixel_addr_out(img_addr_rot_dithered),
+    .valid_addr_out(valid_addr_rot_dithered)
+  );
+
+  rotate rotate_m_bw (
+    .clk_in(clk_pixel),
+    .rst_in(sys_rst),
+    .hcount_in(hcount_scaled),
+    .vcount_in(vcount_scaled),
+    .valid_addr_in(valid_addr_scaled),
+    .pixel_addr_out(img_addr_rot_bw),
+    .valid_addr_out(valid_addr_rot_bw)
+  );
 
   //the Port B of the frame buffer would exist here.
   // The output of rotate is used to grab a pixel from it
@@ -278,21 +314,21 @@ module top_level(
   // in order to make sure the valid signal is lined up in time with the signal
   // it is being used to validate:
 
+  assign led = frame_buff_raw_dithered;
+
   always_ff @(posedge clk_pixel)begin
-    valid_addr_rot_pipe[0] <= valid_addr_rot;
-    valid_addr_rot_pipe[1] <= valid_addr_rot_pipe[0];
+    valid_addr_rot_pipe_dithered[0] <= valid_addr_rot_dithered;
+    valid_addr_rot_pipe_dithered[1] <= valid_addr_rot_pipe_dithered[0];
+
+    valid_addr_rot_pipe_bw[0] <= valid_addr_rot_bw;
+    valid_addr_rot_pipe_bw[1] <= valid_addr_rot_pipe_bw[0];     
   end
-  assign frame_buff = valid_addr_rot_pipe[1]?frame_buff_raw:8'b0;
+  assign frame_buff_bw = valid_addr_rot_pipe_bw[1] ? frame_buff_raw_bw : 8'b0;
+  assign frame_buff_dithered = valid_addr_rot_pipe_dithered[1] ? frame_buff_raw_dithered : 8'b0;
 
-  //split fame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
-  // assign fb_red = {frame_buff[15:11],3'b0};
-  // assign fb_green = {frame_buff[10:5], 2'b0};
-  // assign fb_blue = {frame_buff[4:0],3'b0};
-
-  assign red = frame_buff ? 255 : 0; 
-  assign green = frame_buff ? 255 : 0;
-  assign blue = frame_buff ? 255 : 0;
-
+  assign red = (sw[15] ? (frame_buff_dithered ? 255 : 0) : frame_buff_bw); 
+  assign green = (sw[15] ? (frame_buff_dithered ? 255 : 0) : frame_buff_bw);
+  assign blue = (sw[15] ? (frame_buff_dithered ? 255 : 0) : frame_buff_bw);
 
   //three tmds_encoders (blue, green, red)
   tmds_encoder tmds_red(
