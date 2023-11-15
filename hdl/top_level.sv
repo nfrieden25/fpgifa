@@ -200,7 +200,9 @@ module top_level(
     .dithered_hcount(dithered_hcount),
     .dithered_vcount(dithered_vcount),
     .dithered_valid(dithered_valid),
-    .updated_pixel(updated_pixel)
+    .updated_pixel(updated_pixel),
+
+    .threshold_in(sw[5:2])
   );
 
   //two-port BRAM used to hold image from camera.

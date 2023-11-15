@@ -12,25 +12,43 @@ module dither (
   output logic [9:0] dithered_vcount,
   output logic dithered_valid,
 
-  output logic [7:0] updated_pixel
+  output logic [7:0] updated_pixel,
+
+  input wire [3:0] threshold_in
   );
 
-  logic [7:0] a;
-  logic [7:0] c;
-  logic [7:0] d;
+  logic [8:0] a;
+  logic [8:0] c;
+  logic [8:0] d;
+  logic [8:0] dithered_value;
+  logic signed [7:0] quant_error;
+  logic signed [11:0] new_b;
+  logic signed [11:0] new_c;
+  logic signed [11:0] new_d;
+  logic signed [11:0] new_e;
+  logic [7:0] threshold;
 
-  logic [7:0] dithered_value = (a > 128) ? 255 : 0;
-  logic signed [8:0] quant_error = a - dithered_value;
-  logic signed [8:0] new_b = ($signed(b) + quant_error);
-  logic signed [8:0] new_c = ($signed(c) + quant_error);
-  logic signed [8:0] new_d = ($signed(d) + quant_error);
-  logic signed [8:0] new_e = ($signed(e) + quant_error);
+  assign threshold = threshold_in * 16;
+  assign dithered_value = (a > threshold) ? 255 : 0; // dithered_value is either 255 or 0
+  assign quant_error = a - dithered_value; // quant_error is -127 to 127
+  
+  assign new_b = ($signed(b) + ($signed(quant_error * $signed(7)) >>> 4));
+  assign new_c = ($signed(c) + ($signed(quant_error * $signed(3)) >>> 4));
+  assign new_d = ($signed(d) + ($signed(quant_error * $signed(5)) >>> 4));
+  assign new_e = ($signed(e) + (quant_error >>> 4));
 
   always_ff @(posedge clk_in) begin
     if (rst_in)begin
-        
+      a <= 0;
+      c <= 0;
+      d <= 0;
+      dithered_pixel <= 0;
+      dithered_hcount <= 0;
+      dithered_vcount <= 0;
+      dithered_valid <= 0;
+      updated_pixel <= 0;
     end else begin
-        dithered_pixel <= dithered_value == 255 ? 0 : 1;
+        dithered_pixel <= (a > threshold) ? 0 : 1;
         a <= (new_b > 255) ? 255 : (new_b < 0) ? 0 : new_b;
         c <= (new_d > 255) ? 255 : (new_d < 0) ? 0 : new_d;
         d <= (new_e > 255) ? 255 : (new_e < 0) ? 0 : new_e;

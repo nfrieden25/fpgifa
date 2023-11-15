@@ -1,0 +1,262 @@
+$date
+	Wed Nov 15 17:06:51 2023
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module dither_tb $end
+$var wire 8 ! updated_pixel [7:0] $end
+$var wire 10 " dithered_vcount [9:0] $end
+$var wire 1 # dithered_valid $end
+$var wire 1 $ dithered_pixel $end
+$var wire 11 % dithered_hcount [10:0] $end
+$var reg 11 & a_hcount [10:0] $end
+$var reg 1 ' a_valid $end
+$var reg 10 ( a_vcount [9:0] $end
+$var reg 8 ) b [7:0] $end
+$var reg 1 * clk_in $end
+$var reg 8 + e [7:0] $end
+$var reg 1 , rst_in $end
+$var reg 4 - threshold [3:0] $end
+$scope module dither_m $end
+$var wire 11 . a_hcount [10:0] $end
+$var wire 1 ' a_valid $end
+$var wire 10 / a_vcount [9:0] $end
+$var wire 8 0 b [7:0] $end
+$var wire 1 * clk_in $end
+$var wire 8 1 e [7:0] $end
+$var wire 1 , rst_in $end
+$var wire 4 2 threshold_in [3:0] $end
+$var wire 8 3 threshold [7:0] $end
+$var wire 8 4 quant_error [7:0] $end
+$var wire 12 5 new_e [11:0] $end
+$var wire 12 6 new_d [11:0] $end
+$var wire 12 7 new_c [11:0] $end
+$var wire 12 8 new_b [11:0] $end
+$var wire 9 9 dithered_value [8:0] $end
+$var reg 9 : a [8:0] $end
+$var reg 9 ; c [8:0] $end
+$var reg 9 < d [8:0] $end
+$var reg 11 = dithered_hcount [10:0] $end
+$var reg 1 $ dithered_pixel $end
+$var reg 1 # dithered_valid $end
+$var reg 10 > dithered_vcount [9:0] $end
+$var reg 8 ? updated_pixel [7:0] $end
+$upscope $end
+$scope begin $ivl_for_loop0 $end
+$var integer 32 @ i [31:0] $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+b0 @
+bx ?
+bx >
+bx =
+bx <
+bx ;
+bx :
+b0xxxxxxxx 9
+bx 8
+bx 7
+bx 6
+bx 5
+bx 4
+bx 3
+bx 2
+bx 1
+bx 0
+bx /
+bx .
+bx -
+0,
+bx +
+0*
+bx )
+bx (
+x'
+bx &
+bx %
+x$
+x#
+bx "
+bx !
+$end
+#5000
+1*
+#10000
+0*
+1,
+#15000
+b0 !
+b0 ?
+0#
+b0 "
+b0 >
+b0 %
+b0 =
+0$
+b0 <
+b0 ;
+b0 :
+1*
+#20000
+b1100100 8
+b0 7
+b0 6
+b1100100 5
+b0 4
+b0 9
+0*
+b1100100 +
+b1100100 1
+b1100100 )
+b1100100 0
+b10000000 3
+b1000 -
+b1000 2
+b1 (
+b1 /
+b1 &
+b1 .
+1'
+0,
+#25000
+b10001111 8
+b10010 7
+b1101010 5
+b10000011 6
+b1100100 4
+1#
+b1 "
+b1 >
+b1 %
+b1 =
+b1100100 <
+b1100100 :
+1$
+1*
+#30000
+0*
+b1 @
+#35000
+b110011 8
+b1011101 5
+b1000111 6
+b1101110 7
+b11111111 9
+b10010000 4
+b10010 !
+b10010 ?
+b1101010 <
+b10000011 ;
+b10001111 :
+1*
+#40000
+0*
+b10 @
+#45000
+b1111010 8
+b1100111 5
+b1101100 6
+b1010000 7
+b0 9
+b110011 4
+b1101110 !
+b1101110 ?
+b1011101 <
+b1000111 ;
+b110011 :
+0$
+1*
+#50000
+0*
+b11 @
+#55000
+b10011001 8
+b1101011 5
+b10001101 6
+b10000010 7
+b1111010 4
+b1010000 !
+b1010000 ?
+b1100111 <
+b1101100 ;
+b1111010 :
+1$
+1*
+#60000
+0*
+b100 @
+#65000
+b110111 8
+b1011101 5
+b1001011 6
+b1111001 7
+b11111111 9
+b10011010 4
+b10000010 !
+b10000010 ?
+b1101011 <
+b10001101 ;
+b10011001 :
+1*
+#70000
+0*
+b101 @
+#75000
+b1111100 8
+b1100111 5
+b1101110 6
+b1010101 7
+b0 9
+b110111 4
+b1111001 !
+b1111001 ?
+b1011101 <
+b1001011 ;
+b110111 :
+0$
+1*
+#80000
+0*
+b110 @
+#85000
+b10011010 8
+b1101011 5
+b10001101 6
+b10000101 7
+b1111100 4
+b1010101 !
+b1010101 ?
+b1100111 <
+b1101110 ;
+b1111100 :
+1$
+1*
+#90000
+0*
+b111 @
+#95000
+b110111 8
+b1011101 5
+b1001011 6
+b1111010 7
+b11111111 9
+b10011011 4
+b10000101 !
+b10000101 ?
+b1101011 <
+b10001101 ;
+b10011010 :
+1*
+#100000
+0*
+b1000 @
