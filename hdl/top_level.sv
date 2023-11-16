@@ -161,8 +161,8 @@ module top_level(
   logic [10:0] a_hcount;
   logic [9:0] a_vcount;
   logic a_valid;
-  logic [7:0] b;
-  logic [7:0] e;
+  logic [8:0] b;
+  logic [8:0] e;
 
   line_buffers line_buffers_m (
     .clk_in(clk_pixel),

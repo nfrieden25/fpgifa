@@ -9,14 +9,14 @@ module line_buffers (
 
   input wire [7:0] updated_pixel,
 
-  output logic [7:0] new_b,
-  output logic [7:0] new_e,
+  output logic [8:0] new_b,
+  output logic [8:0] new_e,
   output logic [10:0] a_hcount,
   output logic [9:0] a_vcount,
   output logic a_valid
   );
 
-  localparam FRAME_WIDTH = 240;
+  localparam FRAME_WIDTH = 320;
   logic [7:0] unused_0;
   logic [7:0] unused_1;
   logic [7:0] unused_2;

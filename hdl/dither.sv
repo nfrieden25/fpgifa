@@ -4,8 +4,8 @@ module dither (
   input wire a_valid,
   input wire [10:0] a_hcount,
   input wire [9:0] a_vcount,
-  input wire [7:0] b,
-  input wire [7:0] e,
+  input wire [8:0] b,
+  input wire [8:0] e,
 
   output logic dithered_pixel,
   output logic [10:0] dithered_hcount,
@@ -48,7 +48,8 @@ module dither (
       dithered_valid <= 0;
       updated_pixel <= 0;
     end else begin
-        dithered_pixel <= (a > threshold) ? 0 : 1;
+      if (a_valid) begin
+        dithered_pixel <= (a > threshold) ? 1 : 0;
         a <= (new_b > 255) ? 255 : (new_b < 0) ? 0 : new_b;
         c <= (new_d > 255) ? 255 : (new_d < 0) ? 0 : new_d;
         d <= (new_e > 255) ? 255 : (new_e < 0) ? 0 : new_e;
@@ -56,6 +57,7 @@ module dither (
 
         dithered_hcount <= a_hcount;
         dithered_vcount <= a_vcount;
+      end
         dithered_valid <= a_valid;
     end
   end
