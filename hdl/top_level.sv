@@ -14,7 +14,14 @@ module top_level(
   input wire [2:0] pmodb,
   output logic pmodbclk,
   output logic pmodblock,
-  output logic [15:0] led
+  output logic [15:0] led,
+  input logic SD_DQ0, // below make the four bits of SD data?
+  input logic SD_DQ1,
+  input logic SD_DQ2,
+  input logic SD_DQ3,
+  output logic sd_reset, 
+  output logic sd_sck, 
+  output logic sd_cmd
   );
   //shut up those rgb LEDs (active high):
   assign rgb1 = 0;
@@ -384,6 +391,37 @@ module top_level(
   OBUFDS OBUFDS_green(.I(tmds_signal[1]), .O(hdmi_tx_p[1]), .OB(hdmi_tx_n[1]));
   OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
   OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
+
+  logic reset;            // assign to your system reset
+  assign reset = sys_rst;    // if yours isn't btnr
+
+  logic [3:0] sd_data;
+  // assign sd_dat[2:1] = 2'b11;
+  assign sd_data = {SD_DQ3, SD_DQ2, SD_DQ1, SD_DQ0};
+  assign sd_data[2:1] = 2'b11;
+  assign sd_reset = 0;
+
+  // generate 25 mhz clock for sd_controller 
+  logic clk_25mhz;
+  clk_wiz_0 clocks(.clk_in1(clk_100mhz), .clk_out1(clk_25mhz));
+
+  // sd_controller inputs
+  logic rd;                   // read enable
+  logic wr;                   // write enable
+  logic [7:0] din;            // data to sd card
+  logic [31:0] addr;          // starting address for read/write operation
+
+  // sd_controller outputs
+  logic ready;                // high when ready for new read/write operation
+  logic [7:0] dout;           // data from sd card
+  logic byte_available;       // high when byte available for read
+  logic ready_for_next_byte;  // high when ready for new byte to be written
+
+  // handles reading from the SD card
+  sd_controller sd(.reset(reset), .clk(clk_25mhz), .cs(sd_data[3]), .mosi(sd_cmd), 
+                    .miso(sd_data[0]), .sclk(sd_sck), .ready(ready), .address(addr),
+                    .rd(rd), .dout(dout), .byte_available(byte_available),
+                    .wr(wr), .din(din), .ready_for_next_byte(ready_for_next_byte)); 
 
 endmodule // top_level
 
