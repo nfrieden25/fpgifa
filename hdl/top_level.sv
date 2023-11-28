@@ -15,7 +15,7 @@ module top_level(
   output logic pmodbclk,
   output logic pmodblock,
   output logic [15:0] led,
-  input logic SD_DQ0, // below make the four bits of SD data?
+  input logic SD_DQ0,
   input logic SD_DQ1,
   input logic SD_DQ2,
   input logic SD_DQ3,
@@ -161,7 +161,7 @@ module top_level(
 
   logic [7:0] bw;
   logic [9:0] rgb_sum;
-  assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0],3'b0};
+  assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0], 3'b0};
   assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
 
   logic [7:0] updated_pixel;
@@ -406,22 +406,29 @@ module top_level(
   clk_wiz_0 clocks(.clk_in1(clk_100mhz), .clk_out1(clk_25mhz));
 
   // sd_controller inputs
-  logic rd;                   // read enable
-  logic wr;                   // write enable
-  logic [7:0] din;            // data to sd card
   logic [31:0] addr;          // starting address for read/write operation
 
   // sd_controller outputs
   logic ready;                // high when ready for new read/write operation
-  logic [7:0] dout;           // data from sd card
+  logic [7:0] sd_out;           // data from sd card
   logic byte_available;       // high when byte available for read
   logic ready_for_next_byte;  // high when ready for new byte to be written
 
   // handles reading from the SD card
   sd_controller sd(.reset(reset), .clk(clk_25mhz), .cs(sd_data[3]), .mosi(sd_cmd), 
                     .miso(sd_data[0]), .sclk(sd_sck), .ready(ready), .address(addr),
-                    .rd(rd), .dout(dout), .byte_available(byte_available),
-                    .wr(wr), .din(din), .ready_for_next_byte(ready_for_next_byte)); 
+                    .rd(1), .dout(sd_out), .byte_available(byte_available),
+                    .wr(0), .din(0), .ready_for_next_byte(ready_for_next_byte));
+
+  logic [7:0] sd_counter;
+  always_ff @(posedge clk_pixel) begin // should put a byte of data out every time byte_available goes high
+    sd_counter <= sd_counter + 1;
+    if (sd_counter == 100) begin
+      ready <= 1;
+    end else begin
+      ready <= 0;
+    end
+  end
 
 endmodule // top_level
 

@@ -12,3 +12,9 @@ def get_bnw(filename):
 
 filename = "cat.jpeg"
 print(get_bnw(filename))
+# Convert the NumPy array to PIL image
+with open("8bit", "wb") as f:
+    f.write(bytes(get_bnw(filename)))
+
+# with open("8bit", "rb") as f:
+#     print(f.read())
