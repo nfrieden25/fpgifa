@@ -14,14 +14,14 @@ module top_level(
   input wire [2:0] pmodb,
   output logic pmodbclk,
   output logic pmodblock,
-  output logic [15:0] led,
-  input logic SD_DQ0,
-  input logic SD_DQ1,
-  input logic SD_DQ2,
-  input logic SD_DQ3,
-  output logic sd_reset, 
-  output logic sd_sck, 
-  output logic sd_cmd
+  output logic [15:0] led
+  // input logic SD_DQ0,
+  // input logic SD_DQ1,
+  // input logic SD_DQ2,
+  // input logic SD_DQ3,
+  // output logic sd_reset, 
+  // output logic sd_sck, 
+  // output logic sd_cmd
   );
   //shut up those rgb LEDs (active high):
   assign rgb1 = 0;
@@ -159,10 +159,30 @@ module top_level(
     .vcount_out(vcount_rec) //corresponding vcount of camera pixel
   );
 
+  logic [7:0] rr;
+  logic [7:0] gg;
+  logic [7:0] bb;
+  assign rr = {pixel_data_rec[15:11], 3'b0};
+  assign gg = {pixel_data_rec[10:5], 2'b0};
+  assign bb = {pixel_data_rec[4:0], 3'b0};
+  logic [9:0] rgb;
+  assign rgb = rr + gg + bb; 
+  logic [7:0] rgb_avg;
+  assign rgb_avg = (rgb >> 2) + (rgb >> 4) + (rgb >> 6);
+
   logic [7:0] bw;
-  logic [9:0] rgb_sum;
-  assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0], 3'b0};
-  assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
+  logic [2:0] bw_control = sw[8:6];
+  always_comb begin
+    if (bw_control == 3'b00) begin bw = rgb_avg; end
+    else if (bw_control == 3'b01) begin bw = rr; end
+    else if (bw_control == 3'b10) begin bw = gg; end
+    else begin bw = bb; end
+  end
+
+  // logic [7:0] bw;
+  // logic [9:0] rgb_sum;
+  // assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0], 3'b0};
+  // assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6); // divide by 3
 
   logic [7:0] updated_pixel;
   logic [10:0] a_hcount;
@@ -193,6 +213,13 @@ module top_level(
   logic [9:0] dithered_vcount;
   logic dithered_valid;
 
+  logic [7:0] current_threshold;
+  logic [7:0] new_threshold;
+
+  always_ff @(posedge clk_pixel) begin
+    current_threshold <= new_threshold;
+  end
+
   dither dither_m (
     .clk_in(clk_pixel),
     .rst_in(sys_rst),
@@ -209,8 +236,19 @@ module top_level(
     .dithered_valid(dithered_valid),
     .updated_pixel(updated_pixel),
 
-    .threshold_in(sw[5:2])
+    .threshold(current_threshold)
   );
+
+  threshold_adjust threshold_adjust_m (
+    .clk_in(clk_pixel),
+    .rst_in(sys_rst),
+    .dithered_pixel(dithered_pixel),
+    .dithered_valid(dithered_valid),
+    .threshold_in(current_threshold),
+    .threshold_out(new_threshold)
+  );
+
+  assign led[7:0] = new_threshold; 
 
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
@@ -323,8 +361,6 @@ module top_level(
   // in order to make sure the valid signal is lined up in time with the signal
   // it is being used to validate:
 
-  assign led = frame_buff_raw_dithered;
-
   always_ff @(posedge clk_pixel)begin
     valid_addr_rot_pipe_dithered[0] <= valid_addr_rot_dithered;
     valid_addr_rot_pipe_dithered[1] <= valid_addr_rot_pipe_dithered[0];
@@ -392,6 +428,7 @@ module top_level(
   OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
   OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
 
+/*
   logic reset;            // assign to your system reset
   assign reset = sys_rst;    // if yours isn't btnr
 
@@ -429,6 +466,7 @@ module top_level(
       ready <= 0;
     end
   end
+*/
 
 endmodule // top_level
 
