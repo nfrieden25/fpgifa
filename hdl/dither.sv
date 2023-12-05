@@ -14,7 +14,8 @@ module dither (
 
   output logic [7:0] updated_pixel,
 
-  input wire [7:0] threshold
+  input wire [7:0] threshold_in,
+  input wire [4:0] threshold_settings
   );
 
   logic [8:0] a;
@@ -26,6 +27,16 @@ module dither (
   logic signed [11:0] new_c;
   logic signed [11:0] new_d;
   logic signed [11:0] new_e;
+
+  logic [7:0] threshold;
+
+  always_comb begin
+    if (threshold_settings[0] == 1'b1) begin
+      threshold = threshold_in;
+    end else begin
+      threshold = threshold_settings[4:1] * 16;
+    end
+  end
 
   assign dithered_value = (a > threshold) ? 255 : 0; // dithered_value is either 255 or 0
   assign quant_error = a - dithered_value; // quant_error is -127 to 127

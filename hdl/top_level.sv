@@ -171,7 +171,7 @@ module top_level(
   assign rgb_avg = (rgb >> 2) + (rgb >> 4) + (rgb >> 6);
 
   logic [7:0] bw;
-  logic [2:0] bw_control = sw[8:6];
+  logic [2:0] bw_control = sw[9:7];
   always_comb begin
     if (bw_control == 3'b00) begin bw = rgb_avg; end
     else if (bw_control == 3'b01) begin bw = rr; end
@@ -213,12 +213,15 @@ module top_level(
   logic [9:0] dithered_vcount;
   logic dithered_valid;
 
-  logic [7:0] current_threshold;
+  // logic [7:0] current_threshold;
+  // assign current_threshold = 60;
+
+  // logic [7:0] current_threshold;
   logic [7:0] new_threshold;
 
-  always_ff @(posedge clk_pixel) begin
-    current_threshold <= new_threshold;
-  end
+  // always_ff @(posedge clk_pixel) begin
+  //   current_threshold <= new_threshold;
+  // end
 
   dither dither_m (
     .clk_in(clk_pixel),
@@ -236,15 +239,26 @@ module top_level(
     .dithered_valid(dithered_valid),
     .updated_pixel(updated_pixel),
 
-    .threshold(current_threshold)
+    .threshold_in(new_threshold),
+    .threshold_settings(sw[6:2])
   );
 
-  threshold_adjust threshold_adjust_m (
+  // threshold_adjust threshold_adjust_m (
+  //   .clk_in(clk_pixel),
+  //   .rst_in(sys_rst),
+  //   .dithered_pixel(dithered_pixel),
+  //   .dithered_valid(dithered_valid),
+  //   .threshold_in(current_threshold),
+  //   .threshold_out(new_threshold)
+  // );
+
+  threshold_calibrator #(
+    .CALIBRATION_FRAMES(30))
+  threshold_calibrator_m (
     .clk_in(clk_pixel),
     .rst_in(sys_rst),
     .dithered_pixel(dithered_pixel),
     .dithered_valid(dithered_valid),
-    .threshold_in(current_threshold),
     .threshold_out(new_threshold)
   );
 
