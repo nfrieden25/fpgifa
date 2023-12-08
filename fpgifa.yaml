@@ -9,4 +9,4 @@ cores:
 uart:
   port: "/dev/cu.usbserial-88742923003B1"
   baudrate: 3000000
-  clock_freq: 100000000
+  clock_freq: 74250000

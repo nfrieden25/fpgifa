@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 /*
-This module was generated with Manta v0.0.5 on 07 Dec 2023 at 21:21:55 by nfrieden
+This module was generated with Manta v0.0.5 on 08 Dec 2023 at 14:49:20 by nfrieden
 
 If this breaks or if you've got spicy formal verification memes, contact fischerm [at] mit.edu
 
@@ -29,7 +29,7 @@ module manta (
     output reg [7:0] threshold_out);
 
 
-    uart_rx #(.CLOCKS_PER_BAUD(33)) urx (
+    uart_rx #(.CLOCKS_PER_BAUD(24)) urx (
         .clk(clk),
         .rx(rx),
     
@@ -93,7 +93,7 @@ module manta (
     reg btx_utx_start;
     reg utx_btx_done;
     
-    uart_tx #(.CLOCKS_PER_BAUD(33)) utx (
+    uart_tx #(.CLOCKS_PER_BAUD(24)) utx (
         .clk(clk),
     
         .data_i(btx_utx_data),

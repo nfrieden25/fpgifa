@@ -243,16 +243,21 @@ module top_level(
 
   logic [7:0] current_threshold;
   logic [7:0] new_threshold;
+  logic [7:0] manta_output;
 
   always_ff @(posedge clk_pixel) begin
     current_threshold <= new_threshold;
   end
 
-  // manta manta_inst (
-  //   .clk(clk_pixel),
-  //   .rx(uart_rxd),
-  //   .tx(uart_txd),
-  //   .threshold_out(new_threshold));
+  // when this works: i want this to drive new_output and 
+  // then threshold buttons to modify it?
+  manta manta_inst (
+    .clk(clk_pixel),
+    .rx(uart_rxd),
+    .tx(uart_txd),
+    .threshold_out(manta_output));
+
+  assign led[15:0] = manta_output;
 
   dither dither_m (
     .clk_in(clk_pixel),

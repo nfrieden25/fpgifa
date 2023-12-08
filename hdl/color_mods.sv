@@ -56,33 +56,17 @@ module color_mods (
   logic [7:0] rgb_result;
   logic [7:0] ycrcb_result;
   always_comb begin
-    if (selector == 3'b000) begin
-      rgb_result = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
-    end else begin
-      ycrcb_result = y;
-    end
-
-    // if (selector[2] == 1'b0) begin
-    //   if (selector[1:0] == 2'b00) begin
-    //     rgb_result = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
-    //   end else if (selector[1:0] == 2'b01) begin
-    //     rgb_result = r;
-    //   end else begin
-    //     rgb_result = g;
-    //   end
-    // end else begin
-    //   ycrcb_result = y;
-    // end
-
-    // case(selector) 
-    //   3'b000: rgb_result = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
-    //   3'b001: rgb_result = r;
-    //   3'b010: rgb_result = g;
-    //   3'b011: rgb_result = b;
-    //   3'b100: ycrcb_result = y;
-    //   3'b101: ycrcb_result = cr;
-    //   default: ycrcb_result = cb;
-    // endcase
+    rgb_result = 100;
+    ycrcb_result = 100;
+    case(selector) 
+      3'b000: rgb_result = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6);
+      3'b001: rgb_result = r;
+      3'b010: rgb_result = g;
+      3'b011: rgb_result = b;
+      3'b100: ycrcb_result = y;
+      3'b101: ycrcb_result = cr;
+      default: ycrcb_result = cb;
+    endcase
   end
 
   always_ff @(posedge clk_in) begin

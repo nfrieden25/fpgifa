@@ -116,13 +116,13 @@ set_property -dict { PACKAGE_PIN U17   IOSTANDARD TMDS_33  } [get_ports {hdmi_tx
 set_property -dict { PACKAGE_PIN R16   IOSTANDARD TMDS_33  } [get_ports {hdmi_tx_p[1]}]
 set_property -dict { PACKAGE_PIN R14   IOSTANDARD TMDS_33  } [get_ports {hdmi_tx_p[2]}]
 
-set_property PACKAGE_PIN M16 [ get_ports "SD_DQ0" ]
-set_property PACKAGE_PIN M17 [ get_ports "SD_DQ1" ]
-set_property PACKAGE_PIN M18 [ get_ports "SD_DQ2" ]
-set_property PACKAGE_PIN N18 [ get_ports "SD_DQ3" ]
-set_property PACKAGE_PIN P17 [ get_ports "SD_CMD" ]
-set_property PACKAGE_PIN P18 [ get_ports "SD_CLK" ]
-set_property PACKAGE_PIN R18 [ get_ports "SD_CD_N" ]
+# set_property PACKAGE_PIN M16 [ get_ports "SD_DQ0" ]
+# set_property PACKAGE_PIN M17 [ get_ports "SD_DQ1" ]
+# set_property PACKAGE_PIN M18 [ get_ports "SD_DQ2" ]
+# set_property PACKAGE_PIN N18 [ get_ports "SD_DQ3" ]
+# set_property PACKAGE_PIN P17 [ get_ports "SD_CMD" ]
+# set_property PACKAGE_PIN P18 [ get_ports "SD_CLK" ]
+# set_property PACKAGE_PIN R18 [ get_ports "SD_CD_N" ]
 
 set_property IOSTANDARD LVCMOS33 [ get_ports "SD*"]
 
