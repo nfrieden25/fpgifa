@@ -1,3 +1,5 @@
+// very broken, come back to this
+
 module threshold_calibrator #(
   parameter CALIBRATION_FRAMES = 30
 ) (

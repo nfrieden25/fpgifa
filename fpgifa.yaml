@@ -1,0 +1,12 @@
+---
+cores:
+
+  lab8_io_core:
+    type: io
+
+    outputs:
+      threshold_out: 8
+uart:
+  port: "/dev/cu.usbserial-88742923003B1"
+  baudrate: 3000000
+  clock_freq: 100000000
