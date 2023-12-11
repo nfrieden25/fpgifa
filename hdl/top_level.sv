@@ -225,6 +225,7 @@ module top_level(
     .bw_hcount(bw_hcount),
     .bw_vcount(bw_vcount),
     .updated_pixel(updated_pixel),
+    .set(sw[11]),
 
     .a_hcount(a_hcount),
     .a_vcount(a_vcount),
@@ -232,6 +233,8 @@ module top_level(
     .new_b(b),
     .new_e(e)
   );
+  assign led[7:0] = b;
+  assign led[15:8] = e;
 
   logic dithered_pixel;
   logic [10:0] dithered_hcount;
@@ -256,8 +259,6 @@ module top_level(
     .rx(uart_rxd),
     .tx(uart_txd),
     .threshold_out(manta_output));
-
-  assign led[15:0] = manta_output;
 
   dither dither_m (
     .clk_in(clk_pixel),
