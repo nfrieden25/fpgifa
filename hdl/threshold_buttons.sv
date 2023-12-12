@@ -5,6 +5,7 @@ module threshold_buttons (
   input wire decrement,
   input wire [7:0] threshold_in,
   output logic [7:0] threshold_out,
+  output logic valid_threshold,
   output logic [3:0] ss0_an,
   output logic [3:0] ss1_an,
   output logic [6:0] ss0_c,
@@ -53,12 +54,17 @@ module threshold_buttons (
   // counter
   always_ff @(posedge clk_in) begin
     if (sys_rst) begin
+      valid_threshold <= 0;
       threshold_out <= 128;
     end else begin
       if (btn_pulse_inc) begin
-        threshold_out <= threshold_in + 10;
+        threshold_out <= threshold_in + 5;
+        valid_threshold <= 1;
       end else if (btn_pulse_dec) begin
-        threshold_out <= threshold_in - 10;
+        threshold_out <= threshold_in - 5;
+        valid_threshold <= 1;
+      end else if (valid_threshold) begin
+        valid_threshold <= 0;
       end
     end
   end

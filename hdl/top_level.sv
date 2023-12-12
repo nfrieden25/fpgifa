@@ -1,6 +1,14 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+// SWITCHES
+// [1:0] --> scale
+// [4:2] --> color variants
+
+// [15] --> 8 bit vs. 1 bit video
+// [14] --> real dithering vs. wrong dithering
+// [13] --> floyd steinberg vs. atkinson
+
 module top_level(
   input wire clk_100mhz,
   input wire [15:0] sw, //all 16 input slide switches
@@ -177,44 +185,21 @@ module top_level(
     .rec_valid(data_valid_rec),
     .rec_hcount(hcount_rec),
     .rec_vcount(vcount_rec),
-    .selector(sw[14:12]),
+    .selector(sw[4:2]),
     .result_pixel(bw),
     .result_valid(bw_valid),
     .result_hcount(bw_hcount),
     .result_vcount(bw_vcount)
   );
 
-  // logic [7:0] rr;
-  // logic [7:0] gg;
-  // logic [7:0] bb;
-  // assign rr = {pixel_data_rec[15:11], 3'b0};
-  // assign gg = {pixel_data_rec[10:5], 2'b0};
-  // assign bb = {pixel_data_rec[4:0], 3'b0};
-  // logic [9:0] rgb;
-  // assign rgb = rr + gg + bb; 
-  // logic [7:0] rgb_avg;
-  // assign rgb_avg = (rgb >> 2) + (rgb >> 4) + (rgb >> 6);
-
-  // logic [7:0] bw;
-  // logic [2:0] bw_control = sw[9:7];
-  // always_comb begin
-  //   if (bw_control == 3'b00) begin bw = rgb_avg; end
-  //   else if (bw_control == 3'b01) begin bw = rr; end
-  //   else if (bw_control == 3'b10) begin bw = gg; end
-  //   else begin bw = bb; end
-  // end
-
-  // logic [7:0] bw;
-  // logic [9:0] rgb_sum;
-  // assign rgb_sum = {pixel_data_rec[15:11], 3'b0} + {pixel_data_rec[10:5], 2'b0} + {pixel_data_rec[4:0], 3'b0};
-  // assign bw = (rgb_sum >> 2) + (rgb_sum >> 4) + (rgb_sum >> 6); // divide by 3
-
-  logic [7:0] updated_pixel;
   logic [10:0] a_hcount;
   logic [9:0] a_vcount;
   logic a_valid;
-  logic [8:0] b;
-  logic [8:0] e;
+  logic [7:0] dither_1;
+  logic [7:0] dither_2;
+  logic [7:0] dither_3;
+  logic [7:0] updated_1;
+  logic [7:0] updated_2;
 
   line_buffers line_buffers_m (
     .clk_in(clk_pixel),
@@ -224,36 +209,40 @@ module top_level(
     .bw_pixel_valid(bw_valid),
     .bw_hcount(bw_hcount),
     .bw_vcount(bw_vcount),
-    .updated_pixel(updated_pixel),
-    .set(sw[11]),
+    .updated_1(updated_1),
+    .updated_2(updated_2),
+    .dither_settings(sw[14:12]),
 
     .a_hcount(a_hcount),
     .a_vcount(a_vcount),
     .a_valid(a_valid),
-    .new_b(b),
-    .new_e(e)
+    .out_1(dither_1),
+    .out_2(dither_2),
+    .out_3(dither_3)
   );
-  assign led[7:0] = b;
-  assign led[15:8] = e;
 
   logic dithered_pixel;
   logic [10:0] dithered_hcount;
   logic [9:0] dithered_vcount;
   logic dithered_valid;
 
-  // logic [7:0] current_threshold;
-  // assign current_threshold = 60;
-
   logic [7:0] current_threshold;
   logic [7:0] new_threshold;
+  logic [7:0] old_manta_output;
   logic [7:0] manta_output;
+  logic valid_threshold;
 
   always_ff @(posedge clk_pixel) begin
-    current_threshold <= new_threshold;
+    if (manta_output != old_manta_output) begin
+      current_threshold <= manta_output;
+    end else if (valid_threshold) begin
+      current_threshold <= new_threshold;
+    end else if (btn[1]) begin
+      current_threshold <= calibrated;
+    end
+    old_manta_output <= manta_output;
   end
 
-  // when this works: i want this to drive new_output and 
-  // then threshold buttons to modify it?
   manta manta_inst (
     .clk(clk_pixel),
     .rx(uart_rxd),
@@ -267,18 +256,24 @@ module top_level(
     .a_valid(a_valid),
     .a_hcount(a_hcount),
     .a_vcount(a_vcount),
-    .b(b),
-    .e(e),
+    .in_1(dither_1),
+    .in_2(dither_2),
+    .in_3(dither_3),
+
+    .dither_type(sw[13]),
 
     .dithered_pixel(dithered_pixel),
     .dithered_hcount(dithered_hcount),
     .dithered_vcount(dithered_vcount),
     .dithered_valid(dithered_valid),
-    .updated_pixel(updated_pixel),
 
-    .threshold_in(current_threshold),
-    .threshold_settings(sw[6:2])
+    .updated_1(updated_1),
+    .updated_2(updated_2),
+
+    .threshold_in(current_threshold)
   );
+
+  assign led[15:8] = current_threshold;
 
   threshold_buttons threshold_buttons_m (
     .clk_in(clk_pixel),
@@ -287,11 +282,16 @@ module top_level(
     .decrement(btn[3]),
     .threshold_in(current_threshold),
     .threshold_out(new_threshold),
+    .valid_threshold(valid_threshold),
     .ss0_an(ss0_an),
     .ss1_an(ss1_an),
     .ss0_c(ss0_c),
     .ss1_c(ss1_c)
   );
+
+  // assign led[3:0] = ss0_an;
+  // assign led[7:4] = ss1_an;
+  // assign led[14:8] = ss0_c;
 
   // threshold_adjust threshold_adjust_m (
   //   .clk_in(clk_pixel),
@@ -302,17 +302,19 @@ module top_level(
   //   .threshold_out(new_threshold)
   // );
 
-  // threshold_calibrator #(
-  //   .CALIBRATION_FRAMES(30))
-  // threshold_calibrator_m (
-  //   .clk_in(clk_pixel),
-  //   .rst_in(sys_rst),
-  //   .dithered_pixel(dithered_pixel),
-  //   .dithered_valid(dithered_valid),
-  //   .threshold_out(new_threshold)
-  // );
+  logic [7:0] calibrated;
 
-  // assign led[7:0] = new_threshold; 
+  threshold_calibrator #(
+    .CALIBRATION_FRAMES(40))
+  threshold_calibrator_m (
+    .clk_in(clk_pixel),
+    .rst_in(sys_rst),
+    .dithered_pixel(dithered_pixel),
+    .dithered_valid(dithered_valid),
+    .threshold_out(calibrated)
+  );
+
+  assign led[7:0] = calibrated; 
 
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
