@@ -293,15 +293,6 @@ module top_level(
   // assign led[7:4] = ss1_an;
   // assign led[14:8] = ss0_c;
 
-  // threshold_adjust threshold_adjust_m (
-  //   .clk_in(clk_pixel),
-  //   .rst_in(sys_rst),
-  //   .dithered_pixel(dithered_pixel),
-  //   .dithered_valid(dithered_valid),
-  //   .threshold_in(current_threshold),
-  //   .threshold_out(new_threshold)
-  // );
-
   logic [7:0] calibrated;
 
   threshold_calibrator #(

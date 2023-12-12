@@ -46,7 +46,7 @@ module threshold_calibrator #(
                   highest_transitions <= current_transitions;
                   best_threshold <= threshold_out;
               end 
-              threshold_out <= threshold_out + (256 / CALIBRATION_FRAMES);
+              threshold_out <= threshold_out + (256 / CALIBRATION_FRAMES); // division fine?
               num_frames <= num_frames + 1;
               pixel_counter <= 0;
             end

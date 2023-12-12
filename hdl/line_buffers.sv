@@ -56,8 +56,9 @@ module line_buffers (
 
   // MUX EVERYTHING INTO RIGHT ROLES
   always_comb begin
+    
     if (dither_settings[2] == 0 && dither_settings[1] == 1) begin
-      // atkinson dithering
+      // jjn dithering
       if (line_mux == 0) begin
         write_enable_0 = 1'b0;
         write_ptr_0 = 0;
@@ -65,16 +66,16 @@ module line_buffers (
         read_ptr_0 = bw_hcount;
         out_1 = read_data_0;
 
-        write_ptr_1 = bw_hcount - 3;
+        write_ptr_1 = bw_hcount - 4;
         write_data_1 = updated_1;
         write_enable_1 = 1'b1;
-        read_ptr_1 = bw_hcount - 1;
+        read_ptr_1 = bw_hcount;
         out_2 = read_data_1;
 
-        write_ptr_2 = bw_hcount - 2;
+        write_ptr_2 = bw_hcount - 4;
         write_data_2 = updated_2;
         write_enable_2 = 1'b1;
-        read_ptr_2 = bw_hcount - 2;
+        read_ptr_2 = bw_hcount;
         out_3 = read_data_2;
 
         write_ptr_3 = bw_hcount;
@@ -89,16 +90,16 @@ module line_buffers (
         read_ptr_1 = bw_hcount;
         out_1 = read_data_1;
 
-        write_ptr_2 = bw_hcount - 3;
+        write_ptr_2 = bw_hcount - 4;
         write_data_2 = updated_1;
         write_enable_2 = 1'b1;
-        read_ptr_2 = bw_hcount - 1;
+        read_ptr_2 = bw_hcount;
         out_2 = read_data_2;
  
-        write_ptr_3 = bw_hcount - 2;
+        write_ptr_3 = bw_hcount - 4;
         write_data_3 = updated_2;
         write_enable_3 = 1'b1;
-        read_ptr_3 = bw_hcount - 2;
+        read_ptr_3 = bw_hcount;
         out_3 = read_data_3;
 
         write_ptr_0 = bw_hcount;
@@ -113,16 +114,16 @@ module line_buffers (
         read_ptr_2 = bw_hcount;
         out_1 = read_data_2;
 
-        write_ptr_3 = bw_hcount - 3; 
+        write_ptr_3 = bw_hcount - 4; 
         write_data_3 = updated_1;
         write_enable_3 = 1'b1;
-        read_ptr_3 = bw_hcount - 1;
+        read_ptr_3 = bw_hcount;
         out_2 = read_data_3;
   
-        write_ptr_0 = bw_hcount - 2;
+        write_ptr_0 = bw_hcount - 4;
         write_data_0 = updated_2;
         write_enable_0 = 1'b1;
-        read_ptr_0 = bw_hcount - 2;
+        read_ptr_0 = bw_hcount;
         out_3 = read_data_0;
 
         write_ptr_1 = bw_hcount;
@@ -137,16 +138,16 @@ module line_buffers (
         read_ptr_3 = bw_hcount;
         out_1 = read_data_3;
 
-        write_ptr_0 = bw_hcount - 3;
+        write_ptr_0 = bw_hcount - 4;
         write_data_0 = updated_1; 
         write_enable_0 = 1'b1;
-        read_ptr_0 = bw_hcount - 1;
+        read_ptr_0 = bw_hcount;
         out_2 = read_data_0;
   
-        write_ptr_1 = bw_hcount - 2;
+        write_ptr_1 = bw_hcount - 4;
         write_data_1 = updated_2;
         write_enable_1 = 1'b1;
-        read_ptr_1 = bw_hcount - 2;
+        read_ptr_1 = bw_hcount;
         out_3 = read_data_1;
 
         write_ptr_2 = bw_hcount;
@@ -331,13 +332,13 @@ module line_buffers (
       if (dither_settings[0]) begin
 
       end else if (dither_settings[2] == 0 && dither_settings[1] == 1) begin
-        // atkinson
+        // jjn
         if (bw_pixel_valid) begin
           if (bw_hcount == FRAME_WIDTH - 1) begin
               line_mux <= (line_mux < 3) ? (line_mux + 1) : 0; 
           end
-          a_hcount <= (bw_hcount >= 1) ? bw_hcount - 1 : bw_hcount;
-          a_vcount <= (bw_vcount >= 2) ? bw_vcount - 2 : bw_vcount;
+          a_hcount <= (bw_hcount >= 2) ? bw_hcount - 2 : bw_hcount;
+          a_vcount <= (bw_vcount >= 3) ? bw_vcount - 3 : bw_vcount;
         end
         a_valid <= bw_pixel_valid;
 

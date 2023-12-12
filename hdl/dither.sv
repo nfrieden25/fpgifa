@@ -29,16 +29,28 @@ module dither (
   logic signed [11:0] new_d;
   logic signed [11:0] new_e;
 
-  // for atkinson
+  // for jjn
   logic [7:0] f;
   logic [7:0] h;
   logic [7:0] i;
+  logic [7:0] j;
+  logic [7:0] k;
+  logic [7:0] m;
+  logic [7:0] n;
+  logic [7:0] o;
+  logic [7:0] p;
   logic signed [11:0] new_f;
   logic signed [11:0] new_g;
   logic signed [11:0] new_h;
   logic signed [11:0] new_i;
   logic signed [11:0] new_j;
   logic signed [11:0] new_k;
+  logic signed [11:0] new_l;
+  logic signed [11:0] new_m;
+  logic signed [11:0] new_n;
+  logic signed [11:0] new_o;
+  logic signed [11:0] new_p;
+  logic signed [11:0] new_q;
 
   // for both
   logic [7:0] a;
@@ -59,14 +71,26 @@ module dither (
       new_i = 0;
       new_j = 0;
       new_k = 0;
+      new_l = 0;
+      new_m = 0;
+      new_n = 0;
+      new_o = 0;
+      new_p = 0;
+      new_q = 0;
 
     end else begin
-      new_f = $signed(f) + ($signed(quant_error) >>> 3);
-      new_g = $signed(in_1) + ($signed(quant_error) >>> 3);
-      new_h = $signed(h) + ($signed(quant_error) >>> 3);
-      new_i = $signed(i) + ($signed(quant_error) >>> 3);
-      new_j = $signed(in_2) + ($signed(quant_error) >>> 3);
-      new_k = $signed(in_3) + ($signed(quant_error) >>> 3);
+      new_f = $signed(f) + ($signed(quant_error * $signed(7)) / 48);
+      new_g = $signed(in_1) + ($signed(quant_error * $signed(5)) / 48);
+      new_h = $signed(h) + ($signed(quant_error * $signed(3)) / 48);
+      new_i = $signed(i) + ($signed(quant_error * $signed(5)) / 48);
+      new_j = $signed(j) + ($signed(quant_error * $signed(7)) / 48);
+      new_k = $signed(k) + ($signed(quant_error * $signed(5)) / 48);
+      new_l = $signed(in_2) + ($signed(quant_error * $signed(5)) / 48);
+      new_m = $signed(m) + ($signed(quant_error * $signed(1)) / 48);
+      new_n = $signed(n) + ($signed(quant_error * $signed(3)) / 48);
+      new_o = $signed(o) + ($signed(quant_error * $signed(5)) / 48);
+      new_p = $signed(p) + ($signed(quant_error * $signed(3)) / 48);
+      new_q = $signed(in_3) + ($signed(quant_error * $signed(1)) / 48);
       new_b = 0;
       new_c = 0;
       new_d = 0;
@@ -92,8 +116,14 @@ module dither (
         f <= (new_g > 255) ? 255 : (new_g < 0) ? 0 : new_g;
         h <= (new_i > 255) ? 255 : (new_i < 0) ? 0 : new_i;
         i <= (new_j > 255) ? 255 : (new_j < 0) ? 0 : new_j;
+        j <= (new_k > 255) ? 255 : (new_k < 0) ? 0 : new_k;
+        k <= (new_l > 255) ? 255 : (new_l < 0) ? 0 : new_l;
+        m <= (new_n > 255) ? 255 : (new_n < 0) ? 0 : new_n;
+        n <= (new_o > 255) ? 255 : (new_o < 0) ? 0 : new_o;
+        o <= (new_p > 255) ? 255 : (new_p < 0) ? 0 : new_p;
+        p <= (new_q > 255) ? 255 : (new_q < 0) ? 0 : new_q;
         updated_1 <= (new_h > 255) ? 255 : (new_h < 0) ? 0 : new_h;
-        updated_2 <= (new_k > 255) ? 255 : (new_k < 0) ? 0 : new_k;
+        updated_2 <= (new_m > 255) ? 255 : (new_m < 0) ? 0 : new_m;
       end
     end
     dithered_valid <= a_valid;
