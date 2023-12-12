@@ -428,9 +428,10 @@ module top_level(
   OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
   OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
 
-/*
-  logic reset;            // assign to your system reset
-  assign reset = sys_rst;    // if yours isn't btnr
+  /*
+  localparam NUM_FRAMES = 2; // SET BY USER
+  logic reset;
+  assign reset = sys_rst;
 
   logic [3:0] sd_data;
   // assign sd_dat[2:1] = 2'b11;
@@ -443,30 +444,106 @@ module top_level(
   clk_wiz_0 clocks(.clk_in1(clk_100mhz), .clk_out1(clk_25mhz));
 
   // sd_controller inputs
-  logic [31:0] addr;          // starting address for read/write operation
+  logic [31:0] addr;          // starting address for sd reading, must be multiple of 
+  logic rd;
 
   // sd_controller outputs
   logic ready;                // high when ready for new read/write operation
-  logic [7:0] sd_out;           // data from sd card
+  logic [7:0] sd_out;         // data from sd card
   logic byte_available;       // high when byte available for read
   logic ready_for_next_byte;  // high when ready for new byte to be written
 
   // handles reading from the SD card
   sd_controller sd(.reset(reset), .clk(clk_25mhz), .cs(sd_data[3]), .mosi(sd_cmd), 
                     .miso(sd_data[0]), .sclk(sd_sck), .ready(ready), .address(addr),
-                    .rd(1), .dout(sd_out), .byte_available(byte_available),
+                    .rd(rd), .dout(sd_out), .byte_available(byte_available),
                     .wr(0), .din(0), .ready_for_next_byte(ready_for_next_byte));
 
   logic [7:0] sd_counter;
+
+  logic [10:0] hcount_gif; //hcount from gif
+  logic [9:0] vcount_gif; //vcount from gif
+  logic  data_valid_gif; //single-cycle (74.25 MHz) valid data
+
   always_ff @(posedge clk_pixel) begin // should put a byte of data out every time byte_available goes high
-    sd_counter <= sd_counter + 1;
-    if (sd_counter == 100) begin
-      ready <= 1;
+    // when trigger from fifo, ready goes high
+    if (sys_rst) begin
+      read_count <= 0;
+      addr <= 0;
+      rd <= 1;
     end else begin
-      ready <= 0;
+      // handles address update for sd reading
+      if (ready_for_sd_data) begin
+        if (addr + 512 > 240*320*NUM_FRAMES) begin
+          addr <= 0;
+        end else begin
+          addr <= addr + 512;
+        end
+
+        rd <= 1;
+      end else begin
+        rd <= 0;
+      end
     end
   end
-*/
+
+  // input
+  logic fifo_read; // when to read from fifo
+
+  // output
+  logic ready_for_sd_data; // ready for more data to be written
+  logic fifo_out; // data read from fifo, goes into line buffer
+
+  axis_data_fifo_0 my_fifo(
+    .s_axis_aresetn(sys_rst),
+    .s_axis_aclk(clk_pixel),
+    .s_axis_tvalid(byte_available),
+    .s_axis_tready(ready_for_sd_data),
+    .s_axis_tdata(sd_out),
+    .m_axis_tvalid(data_valid_gif),
+    .m_axis_tready(fifo_read),
+    .m_axis_tdata(fifo_out)
+  );
+
+  logic [$clog2(240*320*NUM_FRAMES)-1:0] read_count; // starts back at 0
+
+  always_ff @(posedge clk_pixel) begin
+    if (sys_rst) begin
+      fifo_read <= 0;
+      read_count <= 0;
+    end else if (data_valid_rec) begin // follow recover module frequency
+      fifo_read <= 1;
+
+      // handles storing location of pixel for hcount and vcount
+      if (read_count == 240*320*NUM_FRAMES) begin
+        read_count <= 0;
+      end else begin
+        read_count <= read_count + 1;
+      end
+    end else begin
+      fifo_read <= 0;
+    end
+  end
+
+  assign hcount_gif = (read_count % (240*320)) % 240;
+  assign vcount_gif = read_count % (240*320);
+
+  // mux the input
+  logic mode; // high is gif
+  always_comb begin
+    if (mode) begin
+      bw_pixel_valid = data_valid_gif;
+      bw_hcount = hcount_gif;
+      bw_vcount = vcount_gif;
+    end else begin
+      bw_pixel_valid = data_valid_rec;
+      bw_hcount = hcount_rec;
+      bw_vcount = vcount_rec;
+    end
+  end
+
+  // beginning timing might not work
+  */
 
 endmodule // top_level
 
