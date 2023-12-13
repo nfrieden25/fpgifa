@@ -489,7 +489,6 @@ module top_level(
   localparam NUM_FRAMES = 2; // SET BY USER
   logic reset;
   assign reset = sys_rst;
-
   logic [3:0] sd_data;
   // assign sd_dat[2:1] = 2'b11;
   assign sd_data = {SD_DQ3, SD_DQ2, SD_DQ1, SD_DQ0};
@@ -501,7 +500,7 @@ module top_level(
   clk_wiz_0 clocks(.clk_in1(clk_100mhz), .clk_out1(clk_25mhz));
 
   // sd_controller inputs
-  logic [31:0] addr;          // starting address for sd reading, must be multiple of 
+  logic [31:0] addr;          // starting address for sd reading, must be multiple of 512
   logic rd;
 
   // sd_controller outputs
@@ -562,7 +561,7 @@ module top_level(
     .m_axis_tdata(fifo_out)
   );
 
-  logic [$clog2(240*320*NUM_FRAMES)-1:0] read_count; // starts back at 0
+  logic [$clog2(240*320):0] read_count; // starts back at 0
 
   always_ff @(posedge clk_pixel) begin
     if (sys_rst) begin
@@ -572,7 +571,7 @@ module top_level(
       fifo_read <= 1;
 
       // handles storing location of pixel for hcount and vcount
-      if (read_count == 240*320*NUM_FRAMES) begin
+      if (read_count == 240*320) begin
         read_count <= 0;
       end else begin
         read_count <= read_count + 1;
@@ -600,9 +599,9 @@ module top_level(
   end
 
   // beginning timing might not work
-  */
+
 
 endmodule // top_level
-
+*/
 
 `default_nettype wire
