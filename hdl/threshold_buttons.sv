@@ -3,6 +3,7 @@ module threshold_buttons (
   input wire sys_rst,
   input wire increment,
   input wire decrement,
+  input wire [6:0] amount,
   input wire [7:0] threshold_in,
   output logic [7:0] threshold_out,
   output logic valid_threshold,
@@ -58,10 +59,10 @@ module threshold_buttons (
       threshold_out <= 128;
     end else begin
       if (btn_pulse_inc) begin
-        threshold_out <= threshold_in + 5;
+        threshold_out <= threshold_in + amount;
         valid_threshold <= 1;
       end else if (btn_pulse_dec) begin
-        threshold_out <= threshold_in - 5;
+        threshold_out <= threshold_in - amount;
         valid_threshold <= 1;
       end else if (valid_threshold) begin
         valid_threshold <= 0;
@@ -73,7 +74,7 @@ module threshold_buttons (
   logic [6:0] ss_c;
   seven_segment_controller mssc(.clk_in(clk_in),
                                 .rst_in(sys_rst),
-                                .val_in(threshold_in),
+                                .val_in(amount),
                                 .cat_out(ss_c),
                                 .an_out({ss0_an, ss1_an}));
   assign ss0_c = ss_c; //control upper four digit's cathodes!

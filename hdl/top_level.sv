@@ -1,14 +1,6 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-// SWITCHES
-// [1:0] --> scale
-// [4:2] --> color variants
-
-// [15] --> 8 bit vs. 1 bit video
-// [14] --> real dithering vs. wrong dithering
-// [13] --> floyd steinberg vs. atkinson
-
 module top_level(
   input wire clk_100mhz,
   input wire [15:0] sw, //all 16 input slide switches
@@ -153,10 +145,6 @@ module top_level(
     .frame_done_out(frame_done) //single-cycle indicator of finished frame
   );
 
-  //camera and recover module are kept separate since some users may eventually
-  //want to add pre-processing on signal prior to framing into hcount/vcount-based
-  //values.
-
   //The recover module takes in information from the camera
   // and sends out:
   // * 5-6-5 pixels of camera information
@@ -280,6 +268,7 @@ module top_level(
     .sys_rst(sys_rst),
     .increment(btn[2]),
     .decrement(btn[3]),
+    .amount(sw[11:5]),
     .threshold_in(current_threshold),
     .threshold_out(new_threshold),
     .valid_threshold(valid_threshold),
@@ -289,9 +278,7 @@ module top_level(
     .ss1_c(ss1_c)
   );
 
-  // assign led[3:0] = ss0_an;
-  // assign led[7:4] = ss1_an;
-  // assign led[14:8] = ss0_c;
+  assign led[7:0] = calibrated;
 
   logic [7:0] calibrated;
 
@@ -305,7 +292,7 @@ module top_level(
     .threshold_out(calibrated)
   );
 
-  assign led[7:0] = calibrated; 
+  // assign led[7:0] = calibrated; 
 
   //two-port BRAM used to hold image from camera.
   //because camera is producing video for 320 by 240 pixels at ~30 fps
