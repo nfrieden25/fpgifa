@@ -60,6 +60,6 @@ report_drc -file $outputDir/post_imp_drc.rpt
 write_bitstream -force $outputDir/final.bit
 
 # Read in all IP
-read_ip ./ip/axis_data_fifo_0/axis_data_fifo_0.xci
-generate_target all [get_ips]
-synth_ip [get_ips]
+# read_ip ./ip/axis_data_fifo_0/axis_data_fifo_0.xci
+# generate_target all [get_ips]
+# synth_ip [get_ips]
